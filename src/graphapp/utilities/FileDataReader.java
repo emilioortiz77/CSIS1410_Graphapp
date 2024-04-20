@@ -4,6 +4,7 @@ import java.io.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 
 /** TODO: This needs a few methods:
  * - getData
@@ -18,20 +19,32 @@ public class FileDataReader extends Reader {
     public FileDataReader(String filePath) {
         BufferedReader reader;
 
+        file = filePath;
+
         try {
             reader = new BufferedReader(new FileReader(filePath));
             String line = reader.readLine();
+            ArrayList<String> lineDataArray = new ArrayList<>();
 
-            System.out.println(line);
-//            while (line != null) {
-//                System.out.printf(line);
-//                line = reader.readLine();
-//            }
+            while (line != null) {
+                lineDataArray = convertFileLineToArray(line);
+                line = reader.readLine();
+            }
+
+            data = lineDataArray.toArray(new String[0]);
 
             reader.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public String[] getData() {
+        return data;
+    }
+
+    public String getFile() {
+        return file;
     }
 
     @Override
@@ -42,12 +55,44 @@ public class FileDataReader extends Reader {
     @Override
     public void close() throws IOException {}
 
-    private String[] convertFileLineToArray(String line) {
+    private ArrayList<String> convertFileLineToArray(String line) {
         ArrayList<String> dataArray = new ArrayList<>();
 
-        // Really just need to get the left of the pipe symbol
-        // So I could just find "this" iterant of a loop and look for the last pipe and then push the string that is in between to the array list.
+        int previousPipe = -1;
 
-        return (String[]) dataArray.toArray();
+        StringBuilder sb;
+
+        for (int i = 0; i < line.length(); i++) {
+            sb = new StringBuilder();
+            if (line.charAt(i) == '|') {
+                if (previousPipe != -1) {
+                    for (int j = previousPipe; j < i; j++) {
+                        if (!Character.isWhitespace(line.charAt(j)) && line.charAt(j) != '|' && line.charAt(j) != '"') {
+                            if (j == 240 || j == 18 ) {
+                                sb.append('0');
+                            } else {
+                                sb.append(line.charAt(j));
+
+                            }
+                        }
+                    }
+
+                    dataArray.add(sb.toString());
+                    previousPipe = i;
+                } else {
+                    previousPipe = 0;
+                    for (int j = previousPipe; j < i; j++) {
+                        if (!Character.isWhitespace(line.charAt(j)) && line.charAt(j) != '|' && line.charAt(j) != '"') {
+                            sb.append(line.charAt(j));
+                        }
+                    }
+
+                    dataArray.add(sb.toString());
+                    previousPipe = i;
+                }
+            }
+        }
+
+        return dataArray;
     }
 }
